@@ -3,14 +3,19 @@ import os
 
 from typing import Union
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
+from database import Database
 
 load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+db = Database(os.getenv("DB_FILE"))
+db.createAnimalTableIfNotExists()
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/")
@@ -18,18 +23,22 @@ async def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/items/{item_id}")
-async def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.get("/openai/animal/{animalId}")
+async def read_animal(animalId: int):
+    # get from db
+    animalName = 'test'
+    names = 'test1, test2, test3'
+    return {"animal_id": animalId, "animal_name": animalName, "names": names}
 
 
-@app.get("/openai/{animal}")
-async def read_item(animal: str):
+@app.post("/openai/animal/{name}")
+async def update_animal(name: str):
     response = await openai.Completion.acreate(
             model="text-davinci-003",
-            prompt=generate_prompt(animal),
+            prompt=generate_prompt(name),
             temperature=0.6,
         )
+    # store in db
     return {"animal": animal, "names": response.choices[0].text}
 
 
