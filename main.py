@@ -4,8 +4,17 @@ import os
 from typing import Union
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from dotenv import load_dotenv
 from database import Database
+
+class AnimalRequest(BaseModel):
+    name: str
+    regen: bool = False
+
+class AnimalResponse(BaseModel):
+    name: str = ''
+    superheroName: str = ''
 
 load_dotenv()
 
@@ -31,15 +40,29 @@ async def read_animal(animalId: int):
     return {"animal_id": animalId, "animal_name": animalName, "names": names}
 
 
-@app.post("/openai/animal/{name}")
-async def update_animal(name: str):
+@app.post("/openai/animal/")
+async def create_animal(animal: AnimalRequest):
+    print(animal)
+    # check if exists in db
+    if (db.checkIfAnimalExists(animal.name) == False):
+        #put in database regardless
+        print("put in db")
+    else:
+        #check animal.regen
+        print("check animal.regen")
+    '''
     response = await openai.Completion.acreate(
             model="text-davinci-003",
-            prompt=generate_prompt(name),
+            prompt=generate_prompt(animal.name),
             temperature=0.6,
         )
-    # store in db
-    return {"animal": animal, "names": response.choices[0].text}
+    '''
+    #return {"animal": animal.name, "names": response.choices[0].text}
+    
+    res = AnimalResponse()
+    res.name = animal.name
+    res.superheroName = "test1, test2, test3"
+    return res
 
 
 def generate_prompt(animal):
