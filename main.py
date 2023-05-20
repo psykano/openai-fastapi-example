@@ -14,7 +14,7 @@ class AnimalRequest(BaseModel):
 
 class AnimalResponse(BaseModel):
     name: str = ''
-    superheroName: str = ''
+    superheroNames: str = ''
 
 load_dotenv()
 
@@ -32,47 +32,62 @@ async def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/openai/animal/{animalId}")
-async def read_animal(animalId: int):
-    # get from db
-    animalName = 'test'
-    names = 'test1, test2, test3'
-    return {"animal_id": animalId, "animal_name": animalName, "names": names}
+#for debugging
+@app.get("/openai/animal/recent/{rowLimit}")
+async def read_animals(rowLimit: int):
+    rows = db.showRecent(rowLimit)
+
+    for row in rows:
+            print("id: ", row[0])
+            print("name: ", row[1])
+            print("superhero_names: ", row[2])
+            print("hits: ", row[3])
+            print("created: ", row[4])
+            print("updated: ", row[5])
+            print("\n")
+
+    return {"rowLimit": rowLimit, "animals": rows}
 
 
 @app.post("/openai/animal/")
 async def create_animal(animal: AnimalRequest):
-    print(animal)
-    # check if exists in db
-    if (db.checkIfAnimalExists(animal.name) == False):
-        #put in database regardless
-        print("put in db")
+    animal.name = animal.name.strip().capitalize()
+    superheroNames = ""
+    # check if animal exists in db
+    animalId = db.getAnimalId(animal.name)
+    if (animalId == 0):
+        superheroNames = await getAnimalSuperheroNames(animal.name)
+        superheroNames = superheroNames.strip()
+        db.insertAnimal(animal.name, superheroNames)
     else:
-        #check animal.regen
-        print("check animal.regen")
-    '''
-    response = await openai.Completion.acreate(
-            model="text-davinci-003",
-            prompt=generate_prompt(animal.name),
-            temperature=0.6,
-        )
-    '''
-    #return {"animal": animal.name, "names": response.choices[0].text}
+        if (animal.regen == False):
+            superheroNames = db.getAnimalSuperheroNames(animalId)
+            db.updateAnimalHit(animalId)
+        else:
+            superheroNames = await getAnimalSuperheroNames(animal.name)
+            superheroNames = superheroNames.strip()
+            db.updateAnimal(animalId, superheroNames)
     
     res = AnimalResponse()
     res.name = animal.name
-    res.superheroName = "test1, test2, test3"
+    res.superheroNames = superheroNames
     return res
+
+
+async def getAnimalSuperheroNames(animal):
+    response = await openai.Completion.acreate(
+        model="text-davinci-003",
+        prompt=generate_prompt(animal),
+        temperature=0.6,
+    )
+    return response.choices[0].text
 
 
 def generate_prompt(animal):
     return """Suggest three names for an animal that is a superhero.
-
 Animal: Cat
 Names: Captain Sharpclaw, Agent Fluffball, The Incredible Feline
 Animal: Dog
 Names: Ruff the Protector, Wonder Canine, Sir Barks-a-Lot
 Animal: {}
-Names:""".format(
-        animal.capitalize(),
-    )
+Names:""".format(animal)
