@@ -6,16 +6,53 @@
     href="/static/dog.png"
   />
   <link rel="stylesheet" href="/static/main.css" />
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js" type="text/javascript"></script>
 </head>
 
 <body>
   <img src="/static/dog.png" class="icon" />
   <h3>Name my pet</h3>
-  <form action="/openai/animal" method="post">
+  <form action="/openai/animal/" id="animalForm">
     <input type="text" name="animal" placeholder="Enter an animal" required />
     <input type="submit" value="Generate names" />
   </form>
-  {% if result %}
-  <div class="result">{{ result }}</div>
-  {% endif %}
+  <div class="result" id="result"></div>
+  <div class="modal"></div>
+
+<script>
+var $body = $("body");
+
+$(document).on({
+    ajaxStart: function() { $body.addClass("loading"); },
+    ajaxStop: function() { $body.removeClass("loading"); }    
+});
+
+// Attach a submit handler to the form
+$( "#animalForm" ).on( "submit", function( event ) {
+ 
+  // Stop form from submitting normally
+  event.preventDefault();
+ 
+  // Get some values from elements on the page:
+  var $form = $( this ),
+    term = $form.find( "input[name='animal']" ).val(),
+    url = $form.attr( "action" );
+ 
+  // Send the data using post
+  var data = JSON.stringify({ "name": term, "regen": false })
+  var posting = $.ajax({
+    url:url,
+    type:"POST",
+    data:data,
+    contentType:"application/json; charset=utf-8",
+    dataType:"json"
+  })
+ 
+  // Put the result in a div
+  posting.done(function( data ) {
+    $( "#result" ).empty().append( data.superheroNames );
+  } );
+} );
+</script>
 </body>
+</html>

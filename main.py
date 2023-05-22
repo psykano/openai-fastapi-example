@@ -36,17 +36,7 @@ async def read_root():
 @app.get("/openai/animal/recent/{rowLimit}")
 async def read_animals(rowLimit: int):
     rows = db.showRecent(rowLimit)
-
-    for row in rows:
-            print("id: ", row[0])
-            print("name: ", row[1])
-            print("superhero_names: ", row[2])
-            print("hits: ", row[3])
-            print("created: ", row[4])
-            print("updated: ", row[5])
-            print("\n")
-
-    return {"rowLimit": rowLimit, "animals": rows}
+    return rows
 
 
 @app.post("/openai/animal/")
