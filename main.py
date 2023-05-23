@@ -32,7 +32,6 @@ async def read_root():
     return {"Hello": "World"}
 
 
-#for debugging
 @app.get("/openai/animal/recent/{rowLimit}")
 async def read_animals(rowLimit: int):
     rows = db.showRecent(rowLimit)
@@ -43,13 +42,17 @@ async def read_animals(rowLimit: int):
 async def create_animal(animal: AnimalRequest):
     animal.name = animal.name.strip().capitalize()
     superheroNames = ""
-    # check if animal exists in db
+
+    # Check if animal exists in cache
+    #  If not, create new entry
+    #  If so, just update the cache entry
     animalId = db.getAnimalId(animal.name)
     if (animalId == 0):
         superheroNames = await getAnimalSuperheroNames(animal.name)
         superheroNames = superheroNames.strip()
         db.insertAnimal(animal.name, superheroNames)
     else:
+        # Check if we want to regenerate new superhero names
         if (animal.regen == False):
             superheroNames = db.getAnimalSuperheroNames(animalId)
             db.updateAnimalHit(animalId)

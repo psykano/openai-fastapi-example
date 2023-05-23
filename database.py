@@ -22,6 +22,7 @@ class Database(object):
 			log.error('Cannot connect to database {}. Raised exception {}.'.format(self.db_file, e))
 			return False
 
+	# Create animal table and add index for animal name
 	def createAnimalTableIfNotExists(self):
 		try:
 			sql = """CREATE TABLE IF NOT EXISTS animals (
@@ -41,6 +42,7 @@ class Database(object):
 			log.error('Cannot create table. Raised exception {}.'.format(e))
 			return False
 
+	# Get animal ID by name using GLOB to make use of the index table
 	def getAnimalId(self, name):
 		try:
 			sql = """SELECT id FROM animals WHERE name GLOB '{}' LIMIT 1""".format(name)
@@ -102,7 +104,6 @@ class Database(object):
 			log.error('Cannot update animal hit with id: {}. Raised exception {}.'.format(animalId, e))
 			return False
 
-	# for debugging
 	def showRecent(self, rowLimit):
 		try:
 			sql = """SELECT * FROM animals ORDER BY updated DESC LIMIT {}""".format(rowLimit)
