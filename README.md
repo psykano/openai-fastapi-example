@@ -1,7 +1,7 @@
 # OpenAI example using FastAPI
 
 ## Features
-* Asynchronous endpoints
+* Asynchronous API
 * Caches results from prompt
 
 ## Get started
