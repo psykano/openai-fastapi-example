@@ -21,7 +21,7 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 db = Database(os.getenv("DB_FILE"))
-db.createAnimalTableIfNotExists()
+db.createTableIfNotExists()
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -43,23 +43,23 @@ async def create_animal(animal: AnimalRequest):
     animal.name = animal.name.strip().capitalize()
     superheroNames = ""
 
-    # Check if animal exists in cache
+    # Check if prompt exists in cache
     #  If not, create new entry
     #  If so, just update the cache entry
-    animalId = db.getAnimalId(animal.name)
-    if (animalId == 0):
+    promptId = db.getPromptId(animal.name)
+    if (promptId == 0):
         superheroNames = await getAnimalSuperheroNames(animal.name)
         superheroNames = superheroNames.strip()
-        db.insertAnimal(animal.name, superheroNames)
+        db.insertPrompt(animal.name, superheroNames)
     else:
         # Check if we want to regenerate new superhero names
         if (animal.regen == False):
-            superheroNames = db.getAnimalSuperheroNames(animalId)
-            db.updateAnimalHit(animalId)
+            superheroNames = db.getPromptResultsFromId(promptId)
+            db.updatePromptHit(promptId)
         else:
             superheroNames = await getAnimalSuperheroNames(animal.name)
             superheroNames = superheroNames.strip()
-            db.updateAnimal(animalId, superheroNames)
+            db.updatePrompt(promptId, superheroNames)
     
     res = AnimalResponse()
     res.name = animal.name

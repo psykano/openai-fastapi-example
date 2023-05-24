@@ -22,19 +22,19 @@ class Database(object):
 			log.error('Cannot connect to database {}. Raised exception {}.'.format(self.db_file, e))
 			return False
 
-	# Create animal table and add index for animal name
-	def createAnimalTableIfNotExists(self):
+	# Create prompts table and add index for prompt input
+	def createTableIfNotExists(self):
 		try:
-			sql = """CREATE TABLE IF NOT EXISTS animals (
+			sql = """CREATE TABLE IF NOT EXISTS prompts (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				name TEXT NOT NULL UNIQUE,
-				superhero_names TEXT NOT NULL,
+				input TEXT NOT NULL UNIQUE,
+				result TEXT NOT NULL,
 				hits INTEGER DEFAULT 1,
 				created datetime default current_timestamp,
 				updated datetime default current_timestamp)"""
 			self.cursor.execute(sql)
 			self.connection.commit()
-			sql = 'CREATE INDEX IF NOT EXISTS animal_names_idx ON animals(name)'
+			sql = 'CREATE INDEX IF NOT EXISTS prompt_input_idx ON prompts(name)'
 			self.cursor.execute(sql)
 			self.connection.commit()
 			return True
@@ -42,74 +42,74 @@ class Database(object):
 			log.error('Cannot create table. Raised exception {}.'.format(e))
 			return False
 
-	# Get animal ID by name using GLOB to make use of the index table
-	def getAnimalId(self, name):
+	# Get prompt ID by input using GLOB to make use of the index table
+	def getPromptId(self, promptInput):
 		try:
-			sql = """SELECT id FROM animals WHERE name GLOB '{}' LIMIT 1""".format(name)
+			sql = """SELECT id FROM prompts WHERE input GLOB '{}' LIMIT 1""".format(promptInput)
 			self.cursor.execute(sql)
 			rows = self.cursor.fetchone()
 			if rows != None:
 				return rows[0]
 			return 0
 		except Exception as e:
-			log.error('Cannot get animal with name: {}. Raised exception {}.'.format(name, e))
+			log.error('Cannot get prompt with input: {}. Raised exception {}.'.format(promptInput, e))
 			return 0
 
-	def getAnimalSuperheroNames(self, animalId):
+	def getPromptResultsFromId(self, promptId):
 		try:
-			sql = """SELECT superhero_names FROM animals WHERE id = '{}' LIMIT 1""".format(animalId)
+			sql = """SELECT result FROM prompts WHERE id = '{}' LIMIT 1""".format(promptId)
 			self.cursor.execute(sql)
 			rows = self.cursor.fetchone()
 			if rows != None:
 				return rows[0]
 			return ""
 		except Exception as e:
-			log.error('Cannot get animal superhero names with id: {}. Raised exception {}.'.format(animalId, e))
+			log.error('Cannot get prompt results with id: {}. Raised exception {}.'.format(promptId, e))
 			return ""
 
-	def insertAnimal(self, name, superheroNames):
+	def insertPrompt(self, promptInput, promptResult):
 		try:
-			sql = """INSERT INTO animals (name,superhero_names) VALUES (
+			sql = """INSERT INTO prompts (input,result) VALUES (
 				'{}',
-				'{}')""".format(name, superheroNames)
+				'{}')""".format(promptInput, promptResult)
 			self.cursor.execute(sql)
 			self.connection.commit()
 			return True
 		except Exception as e:
-			log.error('Cannot insert animal {}. Raised exception {}.'.format(name, e))
+			log.error('Cannot insert prompt {}. Raised exception {}.'.format(promptInput, e))
 			return False
 
-	def updateAnimal(self, animalId, superheroNames):
+	def updatePrompt(self, promptId, promptResult):
 		try:
-			sql = """UPDATE animals SET superhero_names = '{}',
+			sql = """UPDATE prompts SET result = '{}',
 			hits = hits + 1,
 			updated = current_timestamp
-			WHERE id = {}""".format(superheroNames, animalId)
+			WHERE id = {}""".format(promptResult, promptId)
 			self.cursor.execute(sql)
 			self.connection.commit()
 			return True
 		except Exception as e:
-			log.error('Cannot update animal with id: {}. Raised exception {}.'.format(animalId, e))
+			log.error('Cannot update prompt with id: {}. Raised exception {}.'.format(promptId, e))
 			return False
 
-	def updateAnimalHit(self, animalId):
+	def updatePromptHit(self, promptId):
 		try:
-			sql = """UPDATE animals SET hits = hits + 1,
+			sql = """UPDATE prompts SET hits = hits + 1,
 			updated = current_timestamp
-			WHERE id = {}""".format(animalId)
+			WHERE id = {}""".format(promptId)
 			self.cursor.execute(sql)
 			self.connection.commit()
 			return True
 		except Exception as e:
-			log.error('Cannot update animal hit with id: {}. Raised exception {}.'.format(animalId, e))
+			log.error('Cannot update prompt hit with id: {}. Raised exception {}.'.format(promptId, e))
 			return False
 
 	def showRecent(self, rowLimit):
 		try:
-			sql = """SELECT * FROM animals ORDER BY updated DESC LIMIT {}""".format(rowLimit)
+			sql = """SELECT * FROM prompts ORDER BY updated DESC LIMIT {}""".format(rowLimit)
 			self.cursor.execute(sql)
 			rows = self.cursor.fetchall()
 			return rows
 		except Exception as e:
-			log.error('Cannot show all. Raised exception {}.'.format(name, e))
+			log.error('Cannot show all. Raised exception {}.'.format(e))
 			return False
